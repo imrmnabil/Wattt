@@ -24,6 +24,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.sp
 import com.bil.wattt.ui.theme.WatttTheme
 import java.util.Locale
@@ -43,6 +48,10 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+val michromaFontFamily = FontFamily(
+    Font(resId = R.font.michroma)
+)
+
 @Composable
 fun WattageScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -56,13 +65,9 @@ fun WattageScreen(modifier: Modifier = Modifier) {
                 val voltageMilliVolts = intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, 0)
                 val currentMicroAmps = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
                 val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
-                val isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || 
-                               status == BatteryManager.BATTERY_STATUS_FULL
+                val isCharging = (status == BatteryManager.BATTERY_STATUS_CHARGING || 
+                               status == BatteryManager.BATTERY_STATUS_FULL)
                 
-                // Watts = (Voltage in Volts) * (Current in Amperes)
-                // If currentMicroAmps is negative, the battery is discharging.
-                // If it's positive, it's charging (on most modern devices).
-                // We'll show 0.00 W if not charging.
                 val watts = if (isCharging) {
                     (voltageMilliVolts / 1000.0) * (abs(currentMicroAmps) / 1000000.0)
                 } else {
@@ -84,9 +89,20 @@ fun WattageScreen(modifier: Modifier = Modifier) {
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
+        val annotatedString = buildAnnotatedString {
+            withStyle(style = SpanStyle(fontSize = 60.sp)) {
+                append(String.format(Locale.US, "%.2f ", wattage))
+            }
+            withStyle(style = SpanStyle(fontSize = 30.sp)) {
+                append("W")
+            }
+        }
+        
         Text(
-            text = String.format(Locale.US, "%.2f W", wattage),
-            style = MaterialTheme.typography.displayLarge.copy(fontSize = 72.sp)
+            text = annotatedString,
+            style = MaterialTheme.typography.displayLarge.copy(
+                fontFamily = michromaFontFamily
+            )
         )
     }
 }
